@@ -1,6 +1,9 @@
 #!/bin/bash
 # Script for bulk stamping stamp image on multi-page PDF file
 
+
+set -e
+
 SRC_PDF_FILE=""
 STAMP_PDF_FILE=""
 DST_PDF_FILE=""
@@ -20,7 +23,7 @@ print_help () {
 Script for bulk stamping the stamp image on PDF\n\
 \n\
 OPTION:\n\
-\t-n, --noise LEVEL     Apply noise (LEVEL is integer from 1 to 10) to output\n\
+\t-n, --noise LEVEL     Apply noise (LEVEL is integer from 1 to 15) to output\n\
 \t-g, --grayscale       Apply grayscale to output\n\
 \t-s, --staggered       Staggered when stamping\n"
 
@@ -67,14 +70,24 @@ generate_noises () {
     rm -R "${TMP_DIR}/noises/"
   fi
   mkdir -p "${TMP_DIR}/noises/"
-
-  attenuate=`echo "$(( 32 * ( 11 - $NOISE_LEVEL ) ))"`
-  echo "Generating noises... lv = $NOISE_LEVEL (attenuate = ${attenuate})"
+  
+  echo -e -n "Getting page size..."
+  page_size=`identify "${SRC_PDF_FILE}[0]" | grep -oP "([0-9]*x[0-9]*) " -m 1`
+  page_size_w=`echo $page_size | grep -Po "^[0-9]+"`
+  page_size_h=`echo $page_size | grep -Po "[0-9]+$"`
+  echo -e -n " ${page_size_w}x${page_size_h}\n"
+  
+  attenuate=`echo "$(( 300 * ( 16 - $NOISE_LEVEL ) ))"`
+  echo -e "Generating noise... lv = $NOISE_LEVEL, attenuate = ${attenuate}, size = ${page_size_w}x${page_size_h}*2"
+  noise_page_size_w=`echo "$((2 * $page_size_w))"`
+  noise_page_size_h=`echo "$((2 * $page_size_h))"`
+  noise_page_size="${noise_page_size_w}x${noise_page_size_h}"
+  convert -size "${noise_page_size}" xc:gray -attenuate $attenuate +noise random "${TMP_DIR}/noise.png"
+  convert -fuzz 90% -transparent white "${TMP_DIR}/noise.png" "${TMP_DIR}/noise.png"
   num_of_src_pages=`get_num_of_pages_by_pdf "${SRC_PDF_FILE}"`
   for ((i=1; i <= $num_of_src_pages; i++)); do
-    convert -size 2000x2000 xc:gray -seed 10000 -attenuate $attenuate +noise random "${TMP_DIR}/noise.png"
-    convert -fuzz 50% -transparent white "${TMP_DIR}/noise.png" "${TMP_DIR}/noise.png"
-    convert -alpha set -background none -channel RGBA -fill '#ffffff' "${TMP_DIR}/noise.png" "${TMP_DIR}/noises/${i}.pdf"
+    noise_degree=`echo $(($RANDOM % 6 - 3))`
+    convert -alpha set -background none -channel RGBA -fill '#ffffff' -rotate "${noise_degree}" "${TMP_DIR}/noise.png" "${TMP_DIR}/noises/${i}.pdf"
     echo -n "."
   done
 
@@ -151,7 +164,7 @@ fi
 # Apply grayscale to output
 if [ $ENABLE_GRAYSCALE = 1 ]; then
   echo "Converting to grayscale..."
-  convert -colorspace GRAY -density 300 -quality 100 "${DST_PDF_FILE}" "${DST_PDF_FILE}"
+  convert -colorspace GRAY -density 200 -quality 90 "${DST_PDF_FILE}" "${DST_PDF_FILE}"
 fi
 
 # Done
