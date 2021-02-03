@@ -49,7 +49,7 @@ generate_staggered_stamps () {
   num_of_src_pages=`get_num_of_pages_by_pdf "${SRC_PDF_FILE}"`
   for ((i=1; i <= $num_of_src_pages; i++)); do
     staggered_degree=`echo $(($RANDOM % 3 - 1))`
-    convert -alpha set -background none -channel RGBA -fill '#ffffff' -rotate "${staggered_degree}" -fuzz 20% "${STAMP_PDF_FILE}" "${TMP_DIR}/stamp-pages/${i}.pdf"
+    convert -alpha set -background none -channel RGBA -fill '#ffffff' -rotate "${staggered_degree}" -fuzz 20% -density 200 "${STAMP_PDF_FILE}" "${TMP_DIR}/stamp-pages/${i}.pdf"
     echo -n "."
   done
 
