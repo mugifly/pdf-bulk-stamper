@@ -30,7 +30,7 @@ NOTE: I don't guarantee anything. Also, DON'T USE it for important documents.
 
 ### 2. Execute command
 
-#### Execute on Docker:
+#### Execute on Docker (Recommended)
 
 Requirements: [Docker](https://www.docker.com/products/docker-desktop)
 
@@ -45,8 +45,9 @@ Example command:
 ```
 $ sudo docker run -it -v $(pwd):/stamper/ mugifly/pdf-bulk-stamper stamper.sh --noise 1 --grayscale --staggered source.pdf stamp.pdf output.pdf
 ```
+Please execute the above command, in the directory containing the `source.pdf` and `stamp.pdf`.
 
-#### Execute on Standalone:
+#### Execute on Standalone
 
 Requirements: Bash, Image Magick (`convert` command), PDFtk (`pdftk` command)
 
